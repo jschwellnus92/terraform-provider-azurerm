@@ -113,15 +113,28 @@ func dataSourceServiceBusQueueAuthorizationRule() *pluginsdk.Resource {
 
 func dataSourceServiceBusQueueAuthorizationRuleRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).ServiceBus.QueuesAuthClient
+	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	queueId, err := queuesauthorizationrule.ParseQueueID(d.Get("queue_id").(string))
-	if err != nil {
-		return err
+	var rgName string
+	var nsName string
+	var queueName string
+	if v, ok := d.Get("queue_id").(string); ok && v != "" {
+		queueId, err := queuesauthorizationrule.ParseQueueID(v)
+		if err != nil {
+			return fmt.Errorf("parsing topic ID %q: %+v", v, err)
+		}
+		rgName = queueId.ResourceGroupName
+		nsName = queueId.NamespaceName
+		queueName = queueId.QueueName
+	} else {
+		rgName = d.Get("resource_group_name").(string)
+		nsName = d.Get("namespace_name").(string)
+		queueName = d.Get("queue_name").(string)
 	}
 
-	id := queuesauthorizationrule.NewQueueAuthorizationRuleID(queueId.SubscriptionId, queueId.ResourceGroupName, queueId.NamespaceName, queueId.QueueName, d.Get("name").(string))
+	id := queuesauthorizationrule.NewQueueAuthorizationRuleID(subscriptionId, rgName, nsName, queueName, d.Get("name").(string))
 	resp, err := client.QueuesGetAuthorizationRule(ctx, id)
 	if err != nil {
 		if response.WasNotFound(resp.HttpResponse) {

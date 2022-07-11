@@ -59,6 +59,7 @@ func TestAccServiceBusQueue_update(t *testing.T) {
 				check.That(data.ResourceName).Key("enable_batched_operations").HasValue("true"),
 			),
 		},
+		data.ImportStep(),
 		{
 			Config: r.update(data),
 			Check: acceptance.ComposeTestCheckFunc(

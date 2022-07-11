@@ -7,7 +7,6 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/polling"
 )
 
@@ -74,11 +73,6 @@ func (c NamespacesClient) senderForDelete(ctx context.Context, req *http.Request
 		return
 	}
 
-	future.Poller, err = polling.NewLongRunningPollerFromResponse(ctx, resp, c.Client)
-
-	if !response.WasNotFound(future.Poller.HttpResponse) {
-		return future, err
-	}
-
+	future.Poller, err = polling.NewPollerFromResponse(ctx, resp, c.Client, req.Method)
 	return
 }
